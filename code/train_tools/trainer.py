@@ -212,12 +212,12 @@ class Trainer(object):
     def train(self, continue_training=False, max_epochs=500, external_losses=None, save_results_npy=True):
         # Initialise model
         if not continue_training:
-            print 'BEGINNING MODEL TRAINING...\n'
+            print('BEGINNING MODEL TRAINING...\n')
             self.reset_all_counters()
             self.model_tr.dump_config(os.path.join(self.out_dir, 'config.json'))
             self.sess.run(self.model_tr.get_init_op())
         else:
-            print 'RESUMING MODEL TRAINING FROM EPOCH %d...\n' % self.training_epochs_done
+            print('RESUMING MODEL TRAINING FROM EPOCH %d...\n' % self.training_epochs_done)
 
         # Start input pipeline
         self.start_input_pipeline()
@@ -228,7 +228,7 @@ class Trainer(object):
         # Main training loop
         while self.training_epochs_done < max_epochs:
             # Do an entire training epoch
-            print 'Starting training epoch %d/%d...' % (self.training_epochs_done+1, max_epochs)
+            print('Starting training epoch %d/%d...' % (self.training_epochs_done+1, max_epochs))
             inner_tic = time.time()
             epoch_completed = False
             while not epoch_completed:
@@ -242,11 +242,11 @@ class Trainer(object):
             # Update counter of epochs completed
             self.training_epochs_done += 1
             inner_toc = time.time()
-            print 'Completed training epoch %d/%d in %0.3f seconds.\n' \
-                  % (self.training_epochs_done, max_epochs, inner_toc - inner_tic)
+            print('Completed training epoch %d/%d in %0.3f seconds.\n' \
+                        % (self.training_epochs_done, max_epochs, inner_toc - inner_tic))
 
             if self.model_val is not None:
-                print '\tEvaluating performance in validation set...'
+                print('\tEvaluating performance in validation set...')
                 inner_tic = time.time()
                 # Obtain summary containing evaluation performance
                 summary, targets, predictions  = self.eval(self.model_val)
@@ -257,8 +257,8 @@ class Trainer(object):
                 self.validation_batches_seen += self.model_val.get_n_batches()
                 self.validation_epochs_done += 1
                 inner_toc = time.time()
-                print '\tValidation set performance evaluated in %0.3f seconds.' % (inner_toc - inner_tic)
-                print '\tValidation %s: %0.3f.\n' % (external_losses[0][0], main_loss_val)
+                print('\tValidation set performance evaluated in %0.3f seconds.' % (inner_toc - inner_tic))
+                print('\tValidation %s: %0.3f.\n' % (external_losses[0][0], main_loss_val))
                 # Early stopping: save the model if the main external loss in the validation set is smaller than the
                 # best value recorded so far
                 if main_loss_val < self.best_main_loss_val:
@@ -268,7 +268,7 @@ class Trainer(object):
                                                global_step=self.training_batches_seen)
 
             if self.model_tst is not None:
-                print '\tEvaluating performance in test set...'
+                print('\tEvaluating performance in test set...')
                 inner_tic = time.time()
                 # Obtain summary containing evaluation performance
                 summary, targets, predictions = self.eval(self.model_tst)
@@ -279,25 +279,25 @@ class Trainer(object):
                 self.test_batches_seen += self.model_tst.get_n_batches()
                 self.test_epochs_done += 1
                 inner_toc = time.time()
-                print '\tTest set performance evaluated in %0.3f seconds.\n' % (inner_toc - inner_tic)
-                print '\tTest %s: %0.3f.\n' % (external_losses[0][0], main_loss_val)
+                print('\tTest set performance evaluated in %0.3f seconds.\n' % (inner_toc - inner_tic))
+                print('\tTest %s: %0.3f.\n' % (external_losses[0][0], main_loss_val))
 
             # Save model
-            print '\tBacking up the current model...'
+            print('\tBacking up the current model...')
             inner_tic = time.time()
             self.backup_saver.save(sess=self.sess, save_path=os.path.join(self.out_dir, 'backup', 'model.ckpt'),
                                    global_step=self.training_batches_seen)
             inner_toc = time.time()
-            print '\tBacked-up model in %0.3f seconds.\n' % (inner_toc - inner_tic)
+            print('\tBacked-up model in %0.3f seconds.\n' % (inner_toc - inner_tic))
 
         # Termine input pipeline
         self.stop_input_pipeline()
 
         outer_toc = time.time()
-        print 'TRAINING COMPLETED IN %0.3f SECONDS.\n' % (outer_toc - outer_tic)
+        print('TRAINING COMPLETED IN %0.3f SECONDS.\n' % (outer_toc - outer_tic))
         if self.model_val is not None and self.model_tst is not None:
-            print 'Best test %s: %0.3f, achieved in epoch %d.\n' \
-                  % (external_losses[0][0], self.tst_main_loss_val_per_epoch[self.best_epoch], self.best_epoch)
+            print('Best test %s: %0.3f, achieved in epoch %d.\n' \
+                       % (external_losses[0][0], self.tst_main_loss_val_per_epoch[self.best_epoch], self.best_epoch))
             # Sanity-check
             assert len(self.val_main_loss_val_per_epoch) == len(self.tst_main_loss_val_per_epoch)
             results = np.stack((self.val_main_loss_val_per_epoch.values(), self.tst_main_loss_val_per_epoch.values()))

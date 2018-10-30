@@ -1,4 +1,6 @@
-import copy, os, json
+import copy
+import os
+import json
 import numpy as np
 import tensorflow as tf
 

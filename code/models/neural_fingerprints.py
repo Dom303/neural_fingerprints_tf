@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from basic_model import BasicModel
+from .basic_model import BasicModel
 
 
 class NeuralFingerprints(BasicModel):

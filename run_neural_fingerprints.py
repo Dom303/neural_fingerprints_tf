@@ -18,7 +18,7 @@ def parse_input_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("train_path", help="Path to file containing train batches in TFRecord format.", type=str)
     parser.add_argument("out_dir", help="Path to directory where results are to be stored.", type=str)
-    parser.add_argument("train_loss", help="Loss function used to be used as training objective.", type=str,
+    parser.add_argument("train_loss", default="RMSE", help="Loss function used to be used as training objective.", type=str,
                         choices=TRAIN_LOSSES.keys())
     parser.add_argument("eval_losses", nargs='+', help="Loss functions to be used for evaluating the model. "
                                                        "At least one must be provided. If multiple losses are provided, "
