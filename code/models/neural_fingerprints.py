@@ -16,19 +16,19 @@ class NeuralFingerprints(BasicModel):
         prefix = 'train'
 
         # Set the random seed for (partial) reproducibility
-        np.random.seed(self.getitem('config', 'seed', prefix))
-        tf.set_random_seed(self.getitem('config', 'seed', prefix))
+        np.random.seed(self.config[prefix]['seed'])
+        tf.set_random_seed(self.config[prefix]['seed'])
 
     def parse_config_graph_convolutional_layers(self):
         # Path to hyperparameters and configuration settings for the graph convolutional layers
-        prefix = 'model/graph_conv_layers'
+        prefix = self.config['model']['graph_conv_layers']
 
         # Parse options regarded the use of Batch Normalization in the graph convolutional layers
         self.normalizer_fn_graph_conv = None
         self.normalizer_params_graph_conv = None
-        if self.getitem('config', 'use_batch_norm', prefix):
+        if prefix['use_batch_norm']:
             self.normalizer_fn_graph_conv = tf.contrib.layers.batch_norm
-            self.normalizer_params_graph_conv = {'decay': self.getitem('config', 'batch_norm_decay', prefix),
+            self.normalizer_params_graph_conv = {'decay': prefix['batch_norm_decay'],
                                                  'center': True,
                                                  'scale': True,
                                                  'is_training': self.is_training,
@@ -36,52 +36,52 @@ class NeuralFingerprints(BasicModel):
 
         # Parse options regarding the use of L1/L2 regularization of the weights in the graph convolutional layers
         regularizer_list = []
-        l1_reg_val = self.getitem('config', 'l1_reg', prefix)
+        l1_reg_val = prefix['l1_reg']
         if l1_reg_val > 0.0:
             regularizer_list.append(tf.contrib.layers.l1_regularizer(l1_reg_val))
-        l2_reg_val = self.getitem('config', 'l2_reg', prefix)
+        l2_reg_val = prefix['l2_reg']
         if l2_reg_val > 0.0:
             regularizer_list.append(tf.contrib.layers.l2_regularizer(l2_reg_val))
         self.weights_regularizer_graph_conv = tf.contrib.layers.sum_regularizer(regularizer_list)
 
         # Parse options regarding the initialization of the weights in the graph convolutional layers
-        if self.getitem('config', 'weights_initializer', prefix) == 'xavier':
+        if prefix['weights_initializer'] == 'xavier':
             self.weights_initializer_graph_conv = tf.contrib.layers.xavier_initializer()
         else:
-            range_val = np.exp(float(self.getitem('config', 'weights_initializer', prefix)))
+            range_val = np.exp(float(prefix['weights_initializer']))
             self.weights_initializer_graph_conv = tf.random_uniform_initializer(minval=-range_val, maxval=range_val)
 
     def parse_config_fingerprint_output_layers(self):
         # Path to hyperparameters and configuration settings for the fingerprint output layers
-        prefix = 'model/fingerprint_output_layers'
+        prefix = self.config['model']['fingerprint_output_layers']
 
         # Parse options regarding the use of L1/L2 regularization of the weights in the fingerprint output layers
         regularizer_list = []
-        l1_reg_val = self.getitem('config', 'l1_reg', prefix)
+        l1_reg_val = prefix['l1_reg']
         if l1_reg_val > 0.0:
             regularizer_list.append(tf.contrib.layers.l1_regularizer(l1_reg_val))
-        l2_reg_val = self.getitem('config', 'l2_reg', prefix)
+        l2_reg_val = prefix['l2_reg']
         if l2_reg_val > 0.0:
             regularizer_list.append(tf.contrib.layers.l2_regularizer(l2_reg_val))
         self.weights_regularizer_fp_out = tf.contrib.layers.sum_regularizer(regularizer_list)
 
         # Parse options regarding the initialization of the weights in the fingerprint output layers
-        if self.getitem('config', 'weights_initializer', prefix) == 'xavier':
+        if prefix['weights_initializer'] == 'xavier':
             self.weights_initializer_fp_out = tf.contrib.layers.xavier_initializer()
         else:
-            range_val = np.exp(float(self.getitem('config', 'weights_initializer', prefix)))
+            range_val = np.exp(float(prefix['weights_initializer']))
             self.weights_initializer_fp_out = tf.random_uniform_initializer(minval=-range_val, maxval=range_val)
 
     def parse_config_mlp(self):
         # Path to hyperparameters and configuration settings for the output MLP
-        prefix = 'model/mlp'
+        prefix = self.config['model']['mlp']
 
         # Parse options regarded the use of Batch Normalization in the output MLP
         self.normalizer_fn_mlp = None
         self.normalizer_params_mlp = None
-        if self.getitem('config', 'use_batch_norm', prefix):
+        if prefix['use_batch_norm']:
             self.normalizer_fn_mlp = tf.contrib.layers.batch_norm
-            self.normalizer_params_mlp = {'decay': self.getitem('config', 'batch_norm_decay', prefix),
+            self.normalizer_params_mlp = {'decay': prefix['batch_norm_decay'],
                                           'center': True,
                                           'scale': True,
                                           'is_training': self.is_training,
@@ -89,24 +89,23 @@ class NeuralFingerprints(BasicModel):
 
         # Parse options regarding the use of L1/L2 regularization of the weights in the output MLP
         regularizer_list = []
-        l1_reg_val = self.getitem('config', 'l1_reg', prefix)
+        l1_reg_val = prefix['l1_reg']
         if l1_reg_val > 0.0:
             regularizer_list.append(tf.contrib.layers.l1_regularizer(l1_reg_val))
-        l2_reg_val = self.getitem('config', 'l2_reg', prefix)
+        l2_reg_val = prefix['l2_reg']
         if l2_reg_val > 0.0:
             regularizer_list.append(tf.contrib.layers.l2_regularizer(l2_reg_val))
         self.weights_regularizer_mlp = tf.contrib.layers.sum_regularizer(regularizer_list)
 
         # Parse options regarding the initialization of the weights in the output MLP
-        if self.getitem('config', 'weights_initializer', prefix) == 'xavier':
+        if prefix['weights_initializer'] == 'xavier':
             self.weights_initializer_mlp = tf.contrib.layers.xavier_initializer()
         else:
-            range_val = np.exp(float(self.getitem('config', 'weights_initializer', prefix)))
+            range_val = np.exp(float(prefix['weights_initializer']))
             self.weights_initializer_mlp = tf.random_uniform_initializer(minval=-range_val, maxval=range_val)
 
     def parse_config_loss(self):
-        self.loss_fn = self.string_to_tf_loss(self.getitem('config', 'model/loss_fn'))
-
+        self.loss_fn = self.string_to_tf_loss(self.config['model']['loss_fn'])
     def parse_config(self):
         self.parse_config_train()
         self.parse_config_graph_convolutional_layers()
@@ -120,8 +119,9 @@ class NeuralFingerprints(BasicModel):
 
     def build_inputs(self):
         # Path to hyperparameters and configuration settings for the input
-        prefix_node = 'model/input/node_features'
-        prefix_edge = 'model/input/edge_features'
+        prefix = self.config['model']['input']
+        prefix_node = prefix['node_features']
+        prefix_edge = prefix['edge_features']
 
         # In the current implementation, all input data is contained in a single file: self.input_batches_file
         # This file will contain one TFRecord per input batch
@@ -137,7 +137,7 @@ class NeuralFingerprints(BasicModel):
                         'node_graph_map': tf.FixedLenFeature([], tf.string),
                         'target': tf.FixedLenFeature([], tf.string)}
         # The edge features and incidence matrix are only useful if edge labels are to be taken into consideration
-        if self.getitem('config', 'use', prefix_edge) and self.num_edge_features > 0:
+        if prefix_edge['use'] and self.num_edge_features > 0:
             feature_dict['edge_features'] = tf.FixedLenFeature([], tf.string)
             feature_dict['inc_mat'] = tf.FixedLenFeature([], tf.string)
 
@@ -157,7 +157,7 @@ class NeuralFingerprints(BasicModel):
         self.input['node_graph_map'] = tf.decode_raw(features['node_graph_map'], tf.int64)
         self.input['target'] = tf.reshape(tf.decode_raw(features['target'], tf.float32),
                                           tf.cast(tf.stack([-1, self.n_targets]), tf.int32))
-        if self.getitem('config', 'use', prefix_edge) and self.num_edge_features > 0:
+        if prefix_edge['use'] and self.num_edge_features > 0:
             self.input['edge_features'] = tf.reshape(tf.decode_raw(features['edge_features'], tf.float32),
                                                      tf.cast(tf.stack([-1, self.num_edge_features]), tf.int32))
             self.input['inc_mat_indices'] = tf.reshape(tf.decode_raw(features['inc_mat'], tf.int64),
@@ -168,14 +168,14 @@ class NeuralFingerprints(BasicModel):
 
         # Finally, add dropout to inputs
         self.input['node_features_dropout'] = tf.nn.dropout(self.input['node_features'],
-                                                            self.getitem('config', 'keep_prob', prefix_node))
-        if self.getitem('config', 'use', prefix_edge) and self.num_edge_features > 0:
+                                                            prefix_node['keep_prob'])
+        if prefix_edge['use'] and self.num_edge_features > 0:
             self.input['edge_features_dropout'] = tf.nn.dropout(self.input['edge_features'],
-                                                                self.getitem('config', 'keep_prob', prefix_edge))
+                                                                prefix_edge['keep_prob'])
 
     def graph_convolution_layer(self, node_emb, scope, edge_emb=None):
         # Path to hyperparameters and configuration settings for the graph convolutional layers
-        prefix = 'model/graph_conv_layers'
+        prefix = self.config['model']['graph_conv_layers']
 
         with tf.variable_scope(scope, reuse=not self.is_training):
             # Compute the extended node embedding as the concatenation of the original node embedding and the sum of
@@ -188,41 +188,41 @@ class NeuralFingerprints(BasicModel):
 
             # Compute output by applying a fully connected layer to the extended node embedding
             out = tf.contrib.layers.fully_connected(inputs=ext_node_emb,
-                                                    num_outputs=self.getitem('config', 'num_outputs', prefix),
-                                                    activation_fn=self.string_to_tf_act(self.getitem('config', 'activation_fn', prefix)),
+                                                    num_outputs=prefix['num_outputs'],
+                                                    activation_fn=self.string_to_tf_act(prefix['activation_fn']),
                                                     weights_initializer=self.weights_initializer_graph_conv,
                                                     weights_regularizer=self.weights_regularizer_graph_conv,
                                                     biases_initializer=tf.constant_initializer(0.1, tf.float32),
                                                     normalizer_fn=self.normalizer_fn_graph_conv,
                                                     normalizer_params=self.normalizer_params_graph_conv,
-                                                    trainable=self.getitem('config', 'trainable', prefix))
+                                                    trainable=prefix['trainable'])
 
             # Apply dropout (if necessary). Alternatively, could have also forced keep_prob to 1.0 when is_training is
             # False
             if self.is_training:
-                out = tf.nn.dropout(out, self.getitem('config', 'keep_prob', prefix))
+                out = tf.nn.dropout(out, prefix['keep_prob'])
 
         return out
 
     def output_embedding_layer(self, node_emb, scope):
         # Path to hyperparameters and configuration settings for the fingerprint output layers
-        prefix = 'model/fingerprint_output_layers'
+        prefix = self.config['model']['fingerprint_output_layers']
 
         with tf.variable_scope(scope, reuse=not self.is_training):
             # Compute node-level activation
 
             node_fp = tf.contrib.layers.fully_connected(inputs=node_emb,
-                                                        num_outputs=self.getitem('config', 'num_outputs', prefix),
-                                                        activation_fn=self.string_to_tf_act(self.getitem('config', 'activation_fn', prefix)),
+                                                        num_outputs=prefix['num_outputs'],
+                                                        activation_fn=self.string_to_tf_act(prefix['activation_fn']),
                                                         weights_initializer=self.weights_initializer_fp_out,
                                                         weights_regularizer=self.weights_regularizer_fp_out,
                                                         biases_initializer=tf.constant_initializer(0.0, tf.float32),
-                                                        trainable=self.getitem('config', 'trainable', prefix))
+                                                        trainable=prefix['trainable'])
 
             # Apply dropout (if necessary). Alternatively, could have also forced keep_prob to 1.0 when is_training is
             # False
             if self.is_training:
-                node_fp = tf.nn.dropout(node_fp, self.getitem('config', 'keep_prob', prefix))
+                node_fp = tf.nn.dropout(node_fp, prefix['keep_prob'])
 
             # Compute the graph-level activation as the sum of the node-level activations for all nodes in the graph
             graph_fp = tf.segment_sum(data=node_fp, segment_ids=self.input['node_graph_map'])
@@ -231,7 +231,7 @@ class NeuralFingerprints(BasicModel):
 
     def build_graph_fingerprint(self):
         # Total number of graph convolution layers
-        n_layers = self.getitem('config', 'model/graph_conv_layers/n_layers')
+        n_layers = self.config['model']['graph_conv_layers']['n_layers']
 
         # Create output dictionaries for graph convolutional layers and fingerprint output layers
         self.output['graph_conv_layers'] = {}
@@ -242,7 +242,7 @@ class NeuralFingerprints(BasicModel):
 
         # Pre-compute the sum of the feature vectors labelling all edges connected to each node (if necessary)
         self.output['graph_conv_layers']['edge_emb'] = None
-        if self.getitem('config', 'model/input/edge_features/use') and self.num_edge_features > 0:
+        if self.config['model']['input']['edge_features']['use'] and self.num_edge_features > 0:
             self.output['graph_conv_layers']['edge_emb'] = tf.sparse_tensor_dense_matmul(self.input['inc_mat'],
                                                                                          self.input['edge_features'])
         # Compute node and graph level fingerprints for the input layer
@@ -256,7 +256,7 @@ class NeuralFingerprints(BasicModel):
         self.output['fingerprint_output_layers']['graph_fp'] = [graph_fp]
 
         # Create all graph convolutional layers and their respective fingerprint output layers
-        for layer_idx in xrange(1, n_layers+1):
+        for layer_idx in range(1, n_layers+1):
             node_emb = self.graph_convolution_layer(node_emb=self.output['graph_conv_layers']['node_emb'][-1],
                                                     scope='graph_conv_layer_%d' % layer_idx,
                                                     edge_emb=self.output['graph_conv_layers']['edge_emb'])
@@ -272,12 +272,12 @@ class NeuralFingerprints(BasicModel):
 
     def fully_connected_mlp_layer(self, input, scope):
         # Path to hyperparameters and configuration settings for the output MLP
-        prefix = 'model/mlp'
+        prefix = self.config['model']['mlp']
 
         with tf.variable_scope(scope, reuse=not self.is_training):
             out = tf.contrib.layers.fully_connected(inputs=input,
-                                                    num_outputs=self.getitem('config', 'num_outputs', prefix),
-                                                    activation_fn=self.string_to_tf_act(self.getitem('config', 'activation_fn', prefix)),
+                                                    num_outputs=prefix['num_outputs'],
+                                                    activation_fn=self.string_to_tf_act(prefix['activation_fn']),
                                                     weights_initializer=self.weights_initializer_mlp,
                                                     weights_regularizer=self.weights_regularizer_mlp,
                                                     biases_initializer=tf.constant_initializer(0.1, tf.float32),
@@ -287,24 +287,24 @@ class NeuralFingerprints(BasicModel):
             # Apply dropout (if necessary). Alternatively, could have also forced keep_prob to 1.0 when is_training is
             # False
             if self.is_training:
-                out = tf.nn.dropout(out, self.getitem('config', 'keep_prob', prefix))
+                out = tf.nn.dropout(out, prefix['keep_prob'])
 
         return out
 
     def build_output_mlp(self):
         # Total number of hidden layers in the output MLP
-        n_layers = self.getitem('config', 'model/mlp/n_layers')
+        n_layers = self.config['model']['mlp']['n_layers']
 
         # Create output dictionary for output MLP activations
         self.output['mlp'] = {}
 
         # Input to output MLP
-        mlp_act = self.getitem('output', 'fingerprint_output_layers/fingerprint')
+        mlp_act = self.output['fingerprint_output_layers']['fingerprint']
         # List of output MLP activations per layer
         self.output['mlp']['act'] = [mlp_act]
 
         # Create all hidden layers in the output MLP
-        for layer_idx in xrange(n_layers):
+        for layer_idx in range(n_layers):
             mlp_act = self.fully_connected_mlp_layer(input=mlp_act,
                                                      scope='output_mlp_layer_%d' % (layer_idx+1))
             self.output['mlp']['act'].append(mlp_act)
@@ -333,7 +333,7 @@ class NeuralFingerprints(BasicModel):
         if self.is_training:
             with tf.variable_scope('optimizer', reuse=False):
                 self.global_step = tf.Variable(0, name='global_step', trainable=False)
-                self.optimizer = tf.train.AdamOptimizer(self.getitem('config', 'train/learning_rate'))
+                self.optimizer = tf.train.AdamOptimizer(self.config['train']['learning_rate'])
                 self.train_op = self.optimizer.minimize(self.losses['total'], global_step=self.global_step)
 
     def build_summaries(self):
@@ -356,4 +356,4 @@ class NeuralFingerprints(BasicModel):
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_fingerprint(self):
-        return self.getitem('output', 'fingerprint_output_layers/fingerprint')
+        return self.output['fingerprint_output_layers']['fingerprint']

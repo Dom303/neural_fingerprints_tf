@@ -3,6 +3,7 @@ import os
 import json
 import numpy as np
 import tensorflow as tf
+from functools import reduce
 
 
 class BasicModel(object):
@@ -74,7 +75,7 @@ class BasicModel(object):
         # Retrieve shape information from the first TFRecord in the file: number of node features, number of edge
         # features and number of targets
         example = tf.train.Example()
-        example.ParseFromString(tf.python_io.tf_record_iterator(self.input_batches_file).next())
+        example.ParseFromString(tf.python_io.tf_record_iterator(self.input_batches_file).__next__())
         shape = np.fromstring(example.features.feature['shape'].bytes_list.value[0], dtype=np.int64)
         self.num_node_features, self.num_edge_features, self.n_targets = shape[2:5]
 
