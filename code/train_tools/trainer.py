@@ -21,6 +21,7 @@ class Trainer(object):
         self.model_tst = model_tst
 
         # Create a TensorFlow Session
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
         self.sess = tf.Session()
 
         # Create a Saver object to backup the model after each training epoch is completed

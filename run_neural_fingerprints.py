@@ -62,18 +62,18 @@ def run_neural_fingerprints(params):
 
     # Create NeuralFingerprints object for the test model (if necessary)
     model_tst = None
-    if params['path_test']:
+    if params['paths']['test']:
         model_tst = NeuralFingerprints(config=config, input_batches_file=params['paths']['test'], is_training=False)
 
     # Create Trainer object to run the main training loop
-    trainer = Trainer(params['out_dir'], model_tr, model_val, model_tst)
+    trainer = Trainer(params['paths']['result'], model_tr, model_val, model_tst)
 
     # List of evaluation losses
     EVAL_LOSSES = eval_losses_dict()
     eval_losses = [(loss, EVAL_LOSSES[loss]) for loss in params['eval_loss']]
 
     # Train model and evaluate it along the way (if necessary)
-    trainer.train(continue_training=False, max_epochs=params['num_epochs'], external_losses=eval_losses,
+    trainer.train(continue_training=False, max_epochs=params['num_epoch'], external_losses=eval_losses,
                   save_results_npy=True)
     # Close open files
     trainer.close_writers()
