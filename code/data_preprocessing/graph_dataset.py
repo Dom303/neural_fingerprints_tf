@@ -1,13 +1,12 @@
-import operator, copy
+import operator
 import numpy as np
-import tensorflow as tf
 
 
-def make_batches(graphs, batch_size, random_state=0):
+def make_batches(graphs, batch_size: int, random_state=0):
     # Number of graphs
     n_graphs = len(graphs)
     # Number of batches
-    n_batches = n_graphs/batch_size + ((n_graphs % batch_size) != 0)
+    n_batches = int(n_graphs/batch_size + ((n_graphs % batch_size) != 0))
 
     # Number of node features, edge features and targets that the graphs have, respectively
     num_node_features, num_edge_features, n_targets = graphs[0]['shape'][2:5]
@@ -18,32 +17,33 @@ def make_batches(graphs, batch_size, random_state=0):
 
     # Prepare batches
     batches = []
-    for i in xrange(n_batches):
+    for i in range(n_batches):
+        print(i)
         # Create dictionary representing the batch of graphs
         batch = {}
 
         # Retrieve the graphs (randomly) assigned to the i-th batch
         batch_idx = perm[(i*batch_size):min((i+1)*batch_size, n_graphs)]
         batch_graphs = operator.itemgetter(*batch_idx)(graphs)
+        if batch_size == 1:
+            batch_graphs = [batch_graphs]
         n_graphs_batch = len(batch_graphs)
 
         # Retrieve the number of nodes and edges in each graph of the batch
-        n_nodes = np.array(map(lambda g: g['shape'][0], batch_graphs))
-        n_edges = np.array(map(lambda g: g['shape'][1], batch_graphs))
+        n_nodes = np.array([batch_graph['shape'][0] for batch_graph in batch_graphs])
+        n_edges = np.array([batch_graph['shape'][1] for batch_graph in batch_graphs])
         # Compute cumulative number of nodes and edges, i.e. total number of nodes and edges in all previous
         # graphs in the batch
         cum_n_nodes = np.concatenate(([0], np.cumsum(n_nodes)[:-1]))
         cum_n_edges = np.concatenate(([0], np.cumsum(n_edges)[:-1]))
 
         # Concatenate NumPy arrays
-        batch['node_features'] = np.concatenate(map(lambda g: g['node_features'], batch_graphs), axis=0)
-        batch['edge_features'] = np.concatenate(map(lambda g: g['edge_features'], batch_graphs), axis=0)
-        batch['adj_mat'] = np.concatenate(map(lambda (g, offset): g['adj_mat'] + offset,
-                                              zip(batch_graphs, cum_n_nodes)), axis=0)
-        batch['inc_mat'] = np.concatenate(map(lambda (g, node_offset, edge_offset): g['inc_mat'] + [node_offset, edge_offset],
-                                              zip(batch_graphs, cum_n_nodes, cum_n_edges)), axis=0)
-        batch['target'] = np.concatenate(map(lambda g: g['target'], batch_graphs), axis=0)
-        batch['id'] = np.array(map(lambda g: g['id'], batch_graphs)) # IDs of graphs in the batch
+        batch['node_features'] = np.concatenate([batch_graph['node_features'] for batch_graph in batch_graphs], axis=0)
+        batch['edge_features'] = np.concatenate([batch_graph['edge_features'] for batch_graph in batch_graphs], axis=0)
+        batch['adj_mat'] = np.stack([batch_graphs[j]['adj_mat'] + cum_n_nodes[j] for j in range(0, len(batch_graphs))], axis=0)
+        batch['inc_mat'] = np.stack([batch_graphs[j]['inc_mat'] + [cum_n_nodes[j], cum_n_edges[j]] for j in range(0, len(batch_graphs))], axis=0)
+        batch['target'] = np.stack([batch_graph['target'] for batch_graph in batch_graphs], axis=0)
+        batch['id'] = [batch_graph['id'] for batch_graph in batch_graphs]
 
         # 1D numpy arrays indicating the index of the graph (within the batch) to which each node and belong to
         batch['node_graph_map'] = np.repeat(np.arange(n_graphs_batch, dtype=np.int64), n_nodes)
@@ -57,6 +57,8 @@ def make_batches(graphs, batch_size, random_state=0):
         batches.append(batch)
 
     return batches
+
+
 
 # -------------------------------------- I/O FUNCTIONS -------------------------------------------------------------
 
